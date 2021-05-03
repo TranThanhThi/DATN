@@ -19,23 +19,19 @@ const phanCum_Init = (soCum) => {
   return dict;
 };
 
-const thongTin_PhanCum = (dict, soCum) => {
-  for (let i = 0; i < soCum; i++) {
-    let s = 'Cum ' + i + ' : ';
-    dict.forEach((value, key) => {
-      if (value === i) s += key + ', ';
-      else {
-        for (let j = 0; j < value.length; j++) {
-          if (value[j] === i) s += key + ', ';
-        }
-      }
+const compare_Clower_Cupper = (c_lower, c_upper) => {
+  if (c_lower.size === 0 && c_upper.size !== 0) {
+    return 1;
+  } else if (c_lower.size !== 0) {
+    if (c_lower.size !== c_upper.size) return 2;
+    c_lower.forEach((value, key) => {
+      if (c_upper.get(key).toString() !== value.toString()) return 2;
     });
-    console.log(s);
+    return 0;
   }
 };
 
 const th1 = (c_lower, j, i) => {
-  // c_lower!= 0 && c_lower = c_upper
   let centroid = 0;
   let k = 0;
   c_lower.forEach((value, key) => {
@@ -49,15 +45,25 @@ const th1 = (c_lower, j, i) => {
 
 const tinhTamCumArr = (c_lower, c_upper, soCum) => (th1) => {
   //Tinh so cot cua data set to
+  const sosanh_Clower_Cupper = compare_Clower_Cupper(c_lower, c_upper);
   const soCot = data[0].length;
   let arr_centroid = [];
   for (let i = 0; i < soCum; i++) {
     let arr_temp = [];
     for (let j = 0; j < soCot; j++) {
-      if (JSON.stringify(c_lower) === JSON.stringify(c_upper)) {
-        let kq = th1(c_lower, j, i);
-        arr_temp.push(kq);
+      let kq = null;
+      switch (sosanh_Clower_Cupper) {
+        case 0:
+          kq = th1(c_lower, j, i);
+          break;
+        case 1:
+          kq = th1(c_lower, j, i);
+          break;
+        default:
+          kq = th1(c_lower, j, i);
+          break;
       }
+      arr_temp.push(kq);
     }
     arr_centroid.push(arr_temp);
   }
@@ -165,7 +171,13 @@ const RKM = (e, soCum) => {
 
 const main = () => {
   const kq = RKM(20, 3);
-  //console.log(kq);
+  kq.get('phan_cum')
+    .get('c_upper')
+    .forEach((value) => {
+      console.log('====================================');
+      console.log(value);
+      console.log('====================================');
+    });
 };
 
 main();
