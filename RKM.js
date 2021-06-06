@@ -1,20 +1,29 @@
 const data = [
-  [0, 3],
-  [1, 3],
-  [3, 1],
-  [5, 0],
-  [6, 0],
-  [4, 2],
-  [7, 5],
-  [8, 6],
-  [2, 6],
-  [9, 3],
+  [1, 1, 3],
+  [2, 2, 4],
+  [2, 1, 5],
+  [6, 1, 1],
+  [6, 2, 2],
+  [7, 2, 3],
+  [60, 61, 60],
+  [6, 7, 5],
+  [7, 6, 4],
+  [10, 19, 10],
+  [65, 70, 68],
+  [80, 75, 117],
+  [1.01, 2.72, 1.2],
+  [1.07, 2.62, 1.3],
+  [1.61, 2.12, 1.6],
+  [1.41, 3.02, 1.7],
+  [-1.01, 2.82, 1.8],
 ];
 
 const phanCum_Init = (soCum) => {
   let dict = new Map();
   for (let i = 0; i < data.length; i++) {
-    dict.set(i, Math.floor(Math.random() * soCum));
+    if (i < soCum) {
+      dict.set(i, i);
+    } else dict.set(i, Math.floor(Math.random() * soCum));
   }
   return dict;
 };
@@ -43,7 +52,45 @@ const th1 = (c_lower, j, i) => {
   return k === 0 ? 0 : centroid / k;
 };
 
-const tinhTamCumArr = (c_lower, c_upper, soCum) => (th1) => {
+const th2 = (c_upper, j, i) => {
+  let k = 0;
+  let centroid = 0;
+  c_upper.forEach((value, key) => {
+    if (value === i) {
+      k++;
+      centroid += data[Number(key)][j];
+    }
+  });
+  return k === 0 ? 0 : centroid / k;
+};
+
+const th3 = (c_upper, c_lower, j, i, w_up, w_low) => {
+  let k = 0;
+  let up = 0;
+  let low = 0;
+
+  c_upper.forEach((value, key) => {
+    if (!c_lower.has(key) && value === i) {
+      k++;
+      up += data[Number(key)][j];
+    }
+  });
+  up = k === 0 ? 0 : (w_up * up) / k;
+  k = 0;
+
+  c_lower.forEach((value, key) => {
+    if (value === i) {
+      k++;
+      low += data[Number(key)][j];
+    }
+  });
+
+  low = k === 0 ? 0 : (w_low * low) / k;
+
+  return up + low;
+};
+
+const tinhTamCumArr = (c_lower, c_upper, soCum) => (th1) => (th2) => (th3) => {
   //Tinh so cot cua data set to
   const sosanh_Clower_Cupper = compare_Clower_Cupper(c_lower, c_upper);
   const soCot = data[0].length;
@@ -53,21 +100,21 @@ const tinhTamCumArr = (c_lower, c_upper, soCum) => (th1) => {
     for (let j = 0; j < soCot; j++) {
       let kq = null;
       switch (sosanh_Clower_Cupper) {
-        case 0:
+        case 0: //clower!=0 && clower - cupper =0
           kq = th1(c_lower, j, i);
           break;
-        case 1:
-          kq = th1(c_lower, j, i);
+        case 1: // clower == 0 && cupper!=0
+          kq = th2(c_upper, j, i);
           break;
         default:
-          kq = th1(c_lower, j, i);
+          kq = th3(c_upper, c_lower, j, i, 0.3, 0.7);
           break;
       }
       arr_temp.push(kq);
     }
     arr_centroid.push(arr_temp);
   }
-
+  //return arr_centroid.pop();
   return arr_centroid;
 };
 
@@ -118,22 +165,22 @@ const phan_cum_lai = (e, khoangcachArr, soCum) => {
 
 const RKM = (e, soCum) => {
   //Random cac phan tu vao cac cum
-  //let c_lower = phanCum_Init(soCum);
-  const c_lower = new Map([
-    ['0', 0],
-    ['1', 2],
-    ['2', 0],
-    ['3', 1],
-    ['4', 1],
-    ['5', 0],
-    ['6', 1],
-    ['7', 2],
-    ['8', 0],
-    ['9', 2],
-  ]);
+  let c_lower = phanCum_Init(soCum);
+  // const c_lower = new Map([
+  //   ['0', 0],
+  //   ['1', 2],
+  //   ['2', 0],
+  //   ['3', 1],
+  //   ['4', 1],
+  //   ['5', 0],
+  //   ['6', 1],
+  //   ['7', 2],
+  //   ['8', 0],
+  //   ['9', 2],
+  // ]);
 
   //Khoi Tao Tam cum
-  let oldCentroid = tinhTamCumArr(c_lower, c_lower, soCum)(th1);
+  let oldCentroid = tinhTamCumArr(c_lower, c_lower, soCum)(th1)(th2)(th3);
   let newCentroid = null;
   let phan_cum = null;
   while (true) {
@@ -160,7 +207,7 @@ const RKM = (e, soCum) => {
         phan_cum.get('c_lower'),
         phan_cum.get('c_upper'),
         soCum
-      )(th1);
+      )(th1)(th2)(th3);
     } else
       return new Map([
         ['newCentroid', newCentroid],
@@ -170,14 +217,32 @@ const RKM = (e, soCum) => {
 };
 
 const main = () => {
-  const kq = RKM(20, 3);
-  kq.get('phan_cum')
-    .get('c_upper')
-    .forEach((value) => {
-      console.log('====================================');
-      console.log(value);
-      console.log('====================================');
-    });
+  const soCum = 2;
+  const rkm = RKM(1.5, soCum);
+
+  const khoangCachCacDiemDenTam = tinhKhoangCach_PhanTu_TamCum_Arr(
+    rkm.get('newCentroid'),
+    soCum
+  );
+  let kq = [];
+  let cumNgoaiLe = [];
+
+  for (let index = 0; index < soCum; index++) {
+    let dem = 0;
+    rkm
+      .get('phan_cum')
+      .get('c_upper')
+      .forEach((value, key) => {
+        if (value === index) {
+          dem++;
+        }
+        if (Array.isArray(value) && !kq.some((e) => e === key)) kq.push(key);
+      });
+    cumNgoaiLe.push(dem < 0.3 * data.length ? index : null);
+  }
+  console.log(rkm);
+  console.log(kq);
+  console.log('Cum ngoai le: ', cumNgoaiLe);
 };
 
 main();
